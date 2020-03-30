@@ -4,6 +4,8 @@ Main file of application.
 todo: make player
 todo: write to file functional (start/stop button)
 todo: UI fixes
+todo: create readme
+todo: create docs
 """
 
 import tkinter as tk
