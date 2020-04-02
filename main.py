@@ -80,10 +80,6 @@ class Application(tk.Frame):
         self.player_pause = None
         self.player_pause_tooltip = None
         self.player_is_on_pause = False
-        self.player_previous_generation = None
-        self.player_previous_step = None
-        self.player_next_step = None
-        self.player_next_generation = None
 
     def init_widgets(self):
         """
@@ -308,22 +304,6 @@ class Application(tk.Frame):
         self.player_pause = tk.Button(self.player_frame, text="||", state='disabled', command=self.player_pause_command)
         self.player_pause.grid(row=0, column=0)
         self.player_pause_tooltip = ToolTip(self.player_pause, "Pause")
-
-        self.player_previous_generation = tk.Button(self.player_frame, text="<<", state='disabled')
-        self.player_previous_generation.grid(row=0, column=1)
-        ToolTip(self.player_previous_generation, "Go to previous generation")
-
-        self.player_previous_step = tk.Button(self.player_frame, text="<", state='disabled')
-        self.player_previous_step.grid(row=0, column=2)
-        ToolTip(self.player_previous_step, "Go to previous step")
-
-        self.player_next_step = tk.Button(self.player_frame, text=">", state='disabled')
-        self.player_next_step.grid(row=0, column=3)
-        ToolTip(self.player_next_step, "Go to next step")
-
-        self.player_next_generation = tk.Button(self.player_frame, text=">>", state='disabled')
-        self.player_next_generation.grid(row=0, column=4)
-        ToolTip(self.player_next_generation, "Go to next generation")
 
     def hide_visualisation_command(self):
         """
