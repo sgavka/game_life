@@ -1,7 +1,7 @@
 """
 Main file of application.
 
-todo: make player
+todo: improve player with history manage
 todo: write to file functional (start/stop button)
 todo: UI fixes
 todo: create readme
@@ -26,6 +26,10 @@ class Application(tk.Frame):
     filename: str
 
     def __init__(self):
+        self.game_is_started = False
+        self.game_is_break = False
+        self.step_count = 0
+        self.generation_count = 0
         self.root = tk.Tk()
         super().__init__(self.root)
 
@@ -75,6 +79,7 @@ class Application(tk.Frame):
         self.additional_cycles_frame = None
         self.player_pause = None
         self.player_pause_tooltip = None
+        self.player_is_on_pause = False
         self.player_previous_generation = None
         self.player_previous_step = None
         self.player_next_step = None
@@ -300,7 +305,7 @@ class Application(tk.Frame):
         """
         Fill player frame.
         """
-        self.player_pause = tk.Button(self.player_frame, text="||", state='disabled')
+        self.player_pause = tk.Button(self.player_frame, text="||", state='disabled', command=self.player_pause_command)
         self.player_pause.grid(row=0, column=0)
         self.player_pause_tooltip = ToolTip(self.player_pause, "Pause")
 
@@ -331,7 +336,7 @@ class Application(tk.Frame):
             self.hide_visualisation_button['text'] = "Show visualisation"
             self.is_visualisation_on = True
 
-    def start_command(self):
+    def start_command(self, unpause=False):
         """
         Start button command.
         """
@@ -342,27 +347,66 @@ class Application(tk.Frame):
         self.world_height_entry['state'] = 'disabled'
         self.world_width_entry['state'] = 'disabled'
         self.world_ui.disable_options()
-        self.start_button['state'] = 'disabled'
+        self.player_pause['state'] = 'normal'
 
-        generation_count = 0
-        self.world_ui.setup(self.game_frame, int(self.world_width_var.get()), int(self.world_height_var.get()))
+        if not unpause and self.game_is_started:
+            self.game_is_started = False
+            self.generation_count_label['text'] = '0'
+            self.step_count_label['text'] = '0'
+            self.start_button['text'] = "Start Game!"
+            self.player_pause['text'] = '||'
+            self.player_pause_tooltip.text = "Pause"
+            self.player_is_on_pause = False
+            return
+        self.start_button['text'] = "End Game!"
+        self.game_is_started = True
+        if not unpause:
+            self.generation_count = 0
+            self.world_ui.setup(self.game_frame, int(self.world_width_var.get()), int(self.world_height_var.get()))
+            self.game_is_break = False
         while True:
-            self.world_ui.setup_generation(generation_count)
-
-            step_count = 0
+            if not self.game_is_break:
+                self.world_ui.setup_generation(self.generation_count)
+                self.step_count = 0
+            else:
+                self.game_is_break = False
             while True:
-                self.world_ui.do_step()
-                step_count += 1
-                if step_count >= int(self.steps_var.get()):
+                if not self.game_is_started:
                     break
-                self.step_count_label['text'] = str(step_count)
+                if self.player_is_on_pause:
+                    self.game_is_break = True
+                    break
+                self.world_ui.do_step()
+                self.step_count += 1
+                if self.step_count >= int(self.steps_var.get()):
+                    break
+                self.step_count_label['text'] = str(self.step_count)
                 self.world_ui.end_step(self.is_visualisation_on)
                 self.master.update()
-            generation_count += 1
-            if generation_count >= int(self.generations_var.get()) != 0:
+            if not self.game_is_started:
                 break
-            self.generation_count_label['text'] = str(generation_count)
+            if self.player_is_on_pause:
+                break
+            self.generation_count += 1
+            if self.generation_count >= int(self.generations_var.get()) != 0:
+                break
+            self.generation_count_label['text'] = str(self.generation_count)
             self.world_ui.end_generation(self.is_visualisation_on)
+
+    def player_pause_command(self):
+        """
+
+        :return:
+        """
+        if self.player_is_on_pause:
+            self.player_pause['text'] = '||'
+            self.player_pause_tooltip.text = "Pause"
+            self.player_is_on_pause = False
+            self.start_command(True)
+        else:
+            self.player_pause['text'] = '>'
+            self.player_pause_tooltip.text = "Continue"
+            self.player_is_on_pause = True
 
 
 if __name__ == '__main__':
