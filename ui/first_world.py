@@ -3,10 +3,12 @@ First world UI logic.
 todo: use animation on canvas
 todo: draw statistic (make helpers for that)
 """
-
+import os
+import sys
 import tkinter as tk
 import random
 from typing import Tuple
+import pygame as pg
 from ui.helpers import ToolTip
 from game.first_world import FirstWorld as WorldLogic, Unit, FoodObject, PoisonObject
 from ui.main import World as WorldUI
@@ -17,6 +19,74 @@ class ParameterIncorrectException(Exception):
     Exception for incorrect parameter.
     """
     pass
+
+
+class FoodUI(pg.sprite.Sprite):
+    """
+    Food UI.
+    """
+    image: pg.Surface
+    IMAGE = pg.image.load('ui/first_world_images/food.png')
+    """
+    Unit UI.
+    """
+
+    def __init__(self, group, x, y):
+        pg.sprite.Sprite.__init__(self)
+
+        self.image = self.IMAGE
+        self.rect = self.image.get_rect(topleft=(x, y))
+        self.add(group)
+
+    def update(self):
+        pass
+
+
+class PoisonUI(FoodUI):
+    """
+    Poison UI.
+    """
+    IMAGE = pg.image.load('ui/first_world_images/poison.png')
+
+
+class UnitUI(pg.sprite.Sprite):
+    """
+    Unit UI.
+    """
+    image: pg.Surface
+    IMAGE_E = pg.image.load('ui/first_world_images/unit_E.png')
+    IMAGE_N = pg.image.load('ui/first_world_images/unit_N.png')
+    IMAGE_NE = pg.image.load('ui/first_world_images/unit_NE.png')
+    IMAGE_NW = pg.image.load('ui/first_world_images/unit_NW.png')
+    IMAGE_S = pg.image.load('ui/first_world_images/unit_S.png')
+    IMAGE_SE = pg.image.load('ui/first_world_images/unit_SE.png')
+    IMAGE_WS = pg.image.load('ui/first_world_images/unit_WS.png')
+    IMAGE_W = pg.image.load('ui/first_world_images/unit_W.png')
+
+    DIRECTION_TO_IMAGE = {
+        Unit.DIRECTION_E: IMAGE_E,
+        Unit.DIRECTION_N: IMAGE_N,
+        Unit.DIRECTION_NE: IMAGE_NE,
+        Unit.DIRECTION_NW: IMAGE_NW,
+        Unit.DIRECTION_S: IMAGE_S,
+        Unit.DIRECTION_SE: IMAGE_SE,
+        Unit.DIRECTION_WS: IMAGE_WS,
+        Unit.DIRECTION_W: IMAGE_W,
+    }
+
+    """
+    Unit UI.
+    """
+
+    def __init__(self, direction, group, x, y):
+        pg.sprite.Sprite.__init__(self)
+
+        self.image = self.DIRECTION_TO_IMAGE[direction]
+        self.rect = self.image.get_rect(topleft=(x, y))
+        self.add(group)
+
+    def update(self):
+        pass
 
 
 class FirstWorld(WorldUI):
@@ -48,6 +118,10 @@ class FirstWorld(WorldUI):
         self.game_canvas = None
         self.world = None
         self.game_frame = None
+        self.game_screen = None
+        self.parents_count_label = None
+        self.parents_count_var = None
+        self.parents_count_entry = None
 
     def setup_cycles(self, frame: tk.Widget):
         """
@@ -79,18 +153,18 @@ class FirstWorld(WorldUI):
         self.set_units_count_label.grid(row=1, column=0)
 
         self.units_count_var = tk.StringVar()
-        self.units_count_var.set(9)  # todo: move to options UI
+        self.units_count_var.set(9)
         self.units_count_var.trace('w', self.change_units_count_entry)
 
         self.units_count_entry = tk.Entry(frame, textvariable=self.units_count_var, width=5)
         self.units_count_entry.grid(row=1, column=1)
-        # todo: move to options UI
+
         # food count
         self.set_food_count_label = tk.Label(frame, text="Count of food:")
         self.set_food_count_label.grid(row=2, column=0)
 
         self.food_count_var = tk.StringVar()
-        self.food_count_var.set(9)  # todo: move to options UI
+        self.food_count_var.set(9)
         self.food_count_var.trace('w', self.change_food_count_entry)
 
         self.food_count_entry = tk.Entry(frame, textvariable=self.food_count_var, width=5)
@@ -101,11 +175,99 @@ class FirstWorld(WorldUI):
         self.set_poison_count_label.grid(row=3, column=0)
 
         self.poison_count_var = tk.StringVar()
-        self.poison_count_var.set(9)  # todo: move to options UI
+        self.poison_count_var.set(9)
         self.poison_count_var.trace('w', self.change_poison_count_entry)
 
         self.poison_count_entry = tk.Entry(frame, textvariable=self.poison_count_var, width=5)
         self.poison_count_entry.grid(row=3, column=1)
+
+        # parents count
+        self.parents_count_label = tk.Label(frame, text="Count of parents:")
+        self.parents_count_label.grid(row=4, column=0)
+
+        self.parents_count_var = tk.StringVar()
+        self.parents_count_var.set(9)
+        self.parents_count_var.trace('w', self.change_parents_count_entry)
+
+        self.parents_count_entry = tk.Entry(frame, textvariable=self.parents_count_var, width=5)
+        self.parents_count_entry.grid(row=4, column=1)
+
+        # initial unit energy
+        self.initial_unit_energy_label = tk.Label(frame, text="Initial unit energy:")
+        self.initial_unit_energy_label.grid(row=5, column=0)
+
+        self.initial_unit_energy_var = tk.StringVar()
+        self.initial_unit_energy_var.set(100)
+        self.initial_unit_energy_var.trace('w', self.change_initial_unit_energy_entry)
+
+        self.initial_unit_energy_entry = tk.Entry(frame, textvariable=self.initial_unit_energy_var, width=5)
+        self.initial_unit_energy_entry.grid(row=5, column=1)
+
+        # genome mutate from
+        self.genome_mutate_from_label = tk.Label(frame, text="Genome mutate from:")
+        self.genome_mutate_from_label.grid(row=6, column=0)
+
+        self.genome_mutate_from_var = tk.StringVar()
+        self.genome_mutate_from_var.set(2)
+        self.genome_mutate_from_var.trace('w', self.change_genome_mutate_from_entry)
+
+        self.genome_mutate_from_entry = tk.Entry(frame, textvariable=self.genome_mutate_from_var, width=5)
+        self.genome_mutate_from_entry.grid(row=6, column=1)
+
+        # genome mutate to
+        self.genome_mutate_to_label = tk.Label(frame, text="Genome mutate to:")
+        self.genome_mutate_to_label.grid(row=7, column=0)
+
+        self.genome_mutate_to_var = tk.StringVar()
+        self.genome_mutate_to_var.set(10)
+        self.genome_mutate_to_var.trace('w', self.change_genome_mutate_to_entry)
+
+        self.genome_mutate_to_entry = tk.Entry(frame, textvariable=self.genome_mutate_to_var, width=5)
+        self.genome_mutate_to_entry.grid(row=7, column=1)
+
+        # food energy from
+        self.food_energy_from_label = tk.Label(frame, text="Food energy from:")
+        self.food_energy_from_label.grid(row=8, column=0)
+
+        self.food_energy_from_var = tk.StringVar()
+        self.food_energy_from_var.set(25)
+        self.food_energy_from_var.trace('w', self.change_food_energy_from_entry)
+
+        self.food_energy_from_entry = tk.Entry(frame, textvariable=self.food_energy_from_var, width=5)
+        self.food_energy_from_entry.grid(row=8, column=1)
+
+        # food energy to
+        self.food_energy_to_label = tk.Label(frame, text="Food energy to:")
+        self.food_energy_to_label.grid(row=9, column=0)
+
+        self.food_energy_to_var = tk.StringVar()
+        self.food_energy_to_var.set(50)
+        self.food_energy_to_var.trace('w', self.change_food_energy_to_entry)
+
+        self.food_energy_to_entry = tk.Entry(frame, textvariable=self.food_energy_to_var, width=5)
+        self.food_energy_to_entry.grid(row=9, column=1)
+
+        # poison energy from
+        self.poison_energy_from_label = tk.Label(frame, text="Poison energy from:")
+        self.poison_energy_from_label.grid(row=10, column=0)
+
+        self.poison_energy_from_var = tk.StringVar()
+        self.poison_energy_from_var.set(-50)
+        self.poison_energy_from_var.trace('w', self.change_poison_energy_from_entry)
+
+        self.poison_energy_from_entry = tk.Entry(frame, textvariable=self.poison_energy_from_var, width=5)
+        self.poison_energy_from_entry.grid(row=10, column=1)
+
+        # poison energy to
+        self.poison_energy_to_label = tk.Label(frame, text="Poison energy to:")
+        self.poison_energy_to_label.grid(row=11, column=0)
+
+        self.poison_energy_to_var = tk.StringVar()
+        self.poison_energy_to_var.set(-1)
+        self.poison_energy_to_var.trace('w', self.change_poison_energy_to_entry)
+
+        self.poison_energy_to_entry = tk.Entry(frame, textvariable=self.poison_energy_to_var, width=5)
+        self.poison_energy_to_entry.grid(row=11, column=1)
 
     def setup_statistics(self, frame: tk.Widget):
         """
@@ -116,6 +278,62 @@ class FirstWorld(WorldUI):
         pass
 
     def change_poison_count_entry(self, *args):
+        """
+
+        :param args:
+        """
+        pass
+
+    def change_parents_count_entry(self, *args):
+        """
+
+        :param args:
+        """
+        pass
+
+    def change_initial_unit_energy_entry(self, *args):
+        """
+
+        :param args:
+        """
+        pass
+
+    def change_genome_mutate_from_entry(self, *args):
+        """
+
+        :param args:
+        """
+        pass
+
+    def change_genome_mutate_to_entry(self, *args):
+        """
+
+        :param args:
+        """
+        pass
+
+    def change_food_energy_from_entry(self, *args):
+        """
+
+        :param args:
+        """
+        pass
+
+    def change_food_energy_to_entry(self, *args):
+        """
+
+        :param args:
+        """
+        pass
+
+    def change_poison_energy_from_entry(self, *args):
+        """
+
+        :param args:
+        """
+        pass
+
+    def change_poison_energy_to_entry(self, *args):
         """
 
         :param args:
@@ -160,20 +378,32 @@ class FirstWorld(WorldUI):
         self.height = self.count_y * (self.cell_step + self.cell_width)
 
         self.game_frame = frame
+        self.game_frame['width'] = self.width
+        self.game_frame['height'] = self.height
+
+        os.environ['SDL_WINDOWID'] = str(self.game_frame.winfo_id())
+        if sys.platform == "win32":
+            os.environ['SDL_VIDEODRIVER'] = 'windib'
+        pg.display.init()
+
+        # init pygame
+        width = int(self.width / (self.cell_step + self.cell_width)) * self.cell_step + self.cell_width
+        height = int(self.height / (self.cell_step + self.cell_width)) * self.cell_step + self.cell_width
+
+        self.game_screen = pg.display.set_mode((width, height))
+
         self.draw_canvas()
+        pg.display.flip()
+
+        # init world logic
         self.world = WorldLogic(self.count_x, self.count_y)
 
     def draw_canvas(self):
         """
         Draw game canvas.
         """
-        self.game_canvas = tk.Canvas(self.game_frame,
-                                     width=int(self.width / (
-                                         self.cell_step + self.cell_width)) * self.cell_step + self.cell_width,
-                                     height=int(self.height / (
-                                         self.cell_step + self.cell_width)) * self.cell_step + self.cell_width,
-                                     bg='white')
-        self.game_canvas.grid(row=0, column=0)
+        # fill game background
+        self.game_screen.fill(pg.Color(255, 255, 255))
 
     def generate_random_unit(self, x, y):
         """
@@ -181,7 +411,7 @@ class FirstWorld(WorldUI):
         :param x:
         :param y:
         """
-        unit = Unit(self.world, x, y, Unit.GENOME_LEN * 3)
+        unit = Unit(self.world, x, y, int(self.initial_unit_energy_var.get()))
         unit.generate_random_genome()
         unit.set_body_direction(random.randrange(Unit.DIRECTION_NW))
         self.world.set_cell(x, y, unit)
@@ -196,6 +426,9 @@ class FirstWorld(WorldUI):
         units_xy = [(random.randrange(0, self.world.width - 1), random.randrange(0, self.world.height - 1)) for _ in
                     range(count_of_units_in_game)]
         last_generation_units = self.world.get_units()
+        if generation != 0 and len(last_generation_units) == 0:
+            death_units = self.world.death_units[len(self.world.death_units) - int(self.parents_count_entry.get()):]
+            last_generation_units = [(0, 0, unit) for unit in death_units]
         if generation == 0 or len(last_generation_units) == 0:
             for (x, y) in units_xy:
                 self.generate_random_unit(x, y)
@@ -203,7 +436,7 @@ class FirstWorld(WorldUI):
             for (x, y, unit) in last_generation_units:
                 self.world.set_cell(x, y, None)
             last_generation_units.sort(key=lambda tmp: tmp[2].get_body_energy(), reverse=True)
-            parents_count = 2  # todo move to options UI
+            parents_count = int(self.parents_count_entry.get())
             parents = last_generation_units[:parents_count]
             parent: Tuple[int, int, Unit]
             i = 0
@@ -214,9 +447,9 @@ class FirstWorld(WorldUI):
                         break
                     x = units_xy[i][0]
                     y = units_xy[i][1]
-                    unit_new = Unit(self.world, x, y, Unit.GENOME_LEN * 3)
+                    unit_new = Unit(self.world, x, y, int(self.initial_unit_energy_var.get()))
                     unit_new.set_genome(unit.genome)
-                    unit_new.mutate_genome(2, 10)  # todo: move to option UI
+                    unit_new.mutate_genome(int(self.genome_mutate_from_var.get()), int(self.genome_mutate_to_var.get()))
                     self.world.set_cell(x, y, unit_new)
                     i += 1
             i = 0
@@ -228,16 +461,28 @@ class FirstWorld(WorldUI):
 
         # generate food
         food_xy = [(random.randrange(0, self.world.width), random.randrange(0, self.world.height)) for _ in
-                   range(30)]  # todo: move to option UI
+                   range(int(self.food_count_var.get()))]
+        for (x, y, unit) in self.world.get_foods():
+            self.world.set_cell(x, y, None)
         for (x, y) in food_xy:
-            food = FoodObject(random.randrange(100), x, y)  # todo: move to option UI
+            food = FoodObject(
+                random.randrange(int(self.food_energy_from_var.get()), int(self.food_energy_to_var.get())),
+                x,
+                y
+            )
             self.world.set_cell(x, y, food)
 
         # generate poison
         poison_xy = [(random.randrange(0, self.world.width), random.randrange(0, self.world.height)) for _ in
-                     range(30)]  # todo: move to option UI
+                     range(int(self.poison_count_var.get()))]
+        for (x, y, unit) in self.world.get_poisons():
+            self.world.set_cell(x, y, None)
         for (x, y) in poison_xy:
-            poison = PoisonObject(random.randrange(-25, -1), x, y)  # todo: move to option UI
+            poison = PoisonObject(
+                random.randrange(int(self.poison_energy_from_var.get()), int(self.poison_energy_to_var.get())),
+                x,
+                y
+            )
             self.world.set_cell(x, y, poison)
 
     def do_step(self):
@@ -255,12 +500,17 @@ class FirstWorld(WorldUI):
         """
         if visualisation:
             self.draw_canvas()
+            units = pg.sprite.Group()
             for (_, _, food) in self.world.get_foods():
-                self.draw_cell(food)
+                self.draw_cell(food, units)
             for (_, _, poison) in self.world.get_poisons():
-                self.draw_cell(poison)
+                self.draw_cell(poison, units)
             for (_, _, unit) in self.world.get_units():
-                self.draw_cell(unit)
+                self.draw_cell(unit, units)
+            units.draw(self.game_screen)
+            units.update()
+            pg.display.flip()
+            pg.time.delay(10)
 
     def end_generation(self, visualisation):
         """
@@ -278,101 +528,51 @@ class FirstWorld(WorldUI):
         self.units_count_entry['state'] = 'disabled'
         self.food_count_entry['state'] = 'disabled'
         self.poison_count_entry['state'] = 'disabled'
+        self.parents_count_entry['state'] = 'disabled'
+        self.initial_unit_energy_entry['state'] = 'disabled'
+        self.genome_mutate_from_entry['state'] = 'disabled'
+        self.genome_mutate_to_entry['state'] = 'disabled'
+        self.food_energy_from_entry['state'] = 'disabled'
+        self.food_energy_to_entry['state'] = 'disabled'
+        self.poison_energy_from_entry['state'] = 'disabled'
+        self.poison_energy_to_entry['state'] = 'disabled'
 
-    def draw_cell(self, cell):
+    def enable_options(self):
+        """
+        Enable additional options.
+        """
+        self.cell_size_entry['state'] = 'normal'
+        self.units_count_entry['state'] = 'normal'
+        self.food_count_entry['state'] = 'normal'
+        self.poison_count_entry['state'] = 'normal'
+        self.parents_count_entry['state'] = 'normal'
+        self.initial_unit_energy_entry['state'] = 'normal'
+        self.genome_mutate_from_entry['state'] = 'normal'
+        self.genome_mutate_to_entry['state'] = 'normal'
+        self.food_energy_from_entry['state'] = 'normal'
+        self.food_energy_to_entry['state'] = 'normal'
+        self.poison_energy_from_entry['state'] = 'normal'
+        self.poison_energy_to_entry['state'] = 'normal'
+
+    def draw_cell(self, cell, units):
         """
 
         :param cell:
         """
         x = cell.x
         y = cell.y
-        color = 'white'
-        if isinstance(cell, Unit):
-            color = 'grey'
-        elif isinstance(cell, FoodObject):
-            color = 'green'
-        elif isinstance(cell, PoisonObject):
-            color = 'red'
 
         max_cell_x = int(self.width / (self.cell_step + self.cell_width))
         max_cell_y = int(self.height / (self.cell_step + self.cell_width))
         if 0 <= x < max_cell_x and 0 <= y < max_cell_y:
             start_x = 1 + self.cell_width + x * self.cell_step
             start_y = 1 + self.cell_width + y * self.cell_step
-            end_x = self.cell_step + self.cell_width + x * self.cell_step
-            end_y = self.cell_step + self.cell_width + y * self.cell_step
-            self.game_canvas.create_rectangle(
-                start_x,
-                start_y,
-                end_x,
-                end_y,
-                fill=color,
-                outline="black"
-            )
+
             if isinstance(cell, Unit):
-                new_start_x = start_x + int((end_x - start_x) / 2)
-                new_start_y = start_y + int((end_y - start_y) / 2)
-                new_end_x, new_end_y = self.calculate_unit_direction_x_y(cell, start_x, start_y, end_x, end_y)
-                self.game_canvas.create_line(
-                    new_start_x,
-                    new_start_y,
-                    new_end_x,
-                    new_end_y,
-                    width=2
-                )
+                UnitUI(cell.get_body_direction(), units, start_x, start_y)
+            elif isinstance(cell, FoodObject):
+                FoodUI(units, start_x, start_y)
+            elif isinstance(cell, PoisonObject):
+                PoisonUI(units, start_x, start_y)
         else:
             raise ParameterIncorrectException("max x = %s, max y = %s" % (max_cell_x - 1, max_cell_y - 1))
-
-    @staticmethod
-    def calculate_unit_direction_x_y(unit, start_x, start_y, end_x, end_y):
-        """
-
-        :param unit:
-        :param start_x:
-        :param start_y:
-        :param end_x:
-        :param end_y:
-        :return:
-        """
-        half_x = start_x + int((end_x - start_x) / 2)
-        half_y = start_y + int((end_y - start_y) / 2)
-        new_x = 0
-        new_y = 0
-        direction = unit.get_body_direction()
-        if direction == Unit.DIRECTION_N:
-            new_x = half_x
-            new_y = start_y
-        elif direction == Unit.DIRECTION_NE:
-            new_x = end_x
-            new_y = start_y
-        elif direction == Unit.DIRECTION_E:
-            new_x = end_x
-            new_y = half_y
-        elif direction == Unit.DIRECTION_SE:
-            new_x = end_x
-            new_y = end_y
-        elif direction == Unit.DIRECTION_S:
-            new_x = half_x
-            new_y = end_y
-        elif direction == Unit.DIRECTION_WS:
-            new_x = start_x
-            new_y = end_y
-        elif direction == Unit.DIRECTION_W:
-            new_x = start_x
-            new_y = half_y
-        elif direction == Unit.DIRECTION_NW:
-            new_x = start_x
-            new_y = start_y
-        return new_x, new_y
-
-    def draw_grid(self):
-        """
-        Draw canvas grid.
-        """
-        # for x in range(self.cell_width, self.width, self.cell_step):
-        #     self.game_canvas.create_line(x, 0, x, self.height, width=self.cell_width)
-        self.game_canvas.create_line(self.width, 0, self.width, self.height, width=self.cell_width)
-        # for y in range(self.cell_width, self.height, self.cell_step):
-        #     self.game_canvas.create_line(0, y, self.width, y, width=self.cell_width)
-        self.game_canvas.create_line(self.cell_width, self.height, self.width + self.cell_width, self.height,
-                                     width=self.cell_width)

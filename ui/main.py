@@ -84,3 +84,10 @@ class World:
         Need implementation.
         """
         raise Exception()
+
+    def enable_options(self):
+        """
+        Enable additional options.
+        Need implementation.
+        """
+        raise Exception()

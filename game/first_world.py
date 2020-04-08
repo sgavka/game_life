@@ -57,6 +57,11 @@ class FirstWorld(World):
     """
     Class with world's logic.
     """
+    def __init__(self, height, width):
+        super().__init__(height, width)
+
+        self.death_units = []
+
     def get_units(self):
         """
 
@@ -118,6 +123,8 @@ class FirstWorld(World):
             self.set_cell(x, y, None)
             if unit.is_alive():
                 self.set_cell(unit.x, unit.y, unit)
+            else:
+                self.death_units.append(unit)
 
 
 class Unit(MainUnit):

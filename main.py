@@ -1,7 +1,6 @@
 """
 Main file of application.
 
-todo: improve player with history manage
 todo: write to file functional (start/stop button)
 todo: UI fixes
 todo: create readme
@@ -327,6 +326,7 @@ class Application(tk.Frame):
         self.world_height_entry['state'] = 'disabled'
         self.world_width_entry['state'] = 'disabled'
         self.world_ui.disable_options()
+
         self.player_pause['state'] = 'normal'
 
         if not unpause and self.game_is_started:
@@ -336,6 +336,15 @@ class Application(tk.Frame):
             self.start_button['text'] = "Start Game!"
             self.player_pause['text'] = '||'
             self.player_pause_tooltip.text = "Pause"
+
+            self.open_file_button['state'] = 'normal'
+            self.worlds_dropdown['state'] = 'normal'
+            self.generations_entry['state'] = 'normal'
+            self.steps_entry['state'] = 'normal'
+            self.world_height_entry['state'] = 'normal'
+            self.world_width_entry['state'] = 'normal'
+            self.world_ui.enable_options()
+
             self.player_is_on_pause = False
             return
         self.start_button['text'] = "End Game!"
