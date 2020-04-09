@@ -365,9 +365,9 @@ class Application(tk.Frame):
                 if self.player_is_on_pause:
                     self.game_is_break = True
                     break
-                self.world_ui.do_step()
+                end_generation = self.world_ui.do_step()
                 self.step_count += 1
-                if self.step_count >= int(self.steps_var.get()):
+                if self.step_count >= int(self.steps_var.get()) or end_generation:
                     break
                 self.step_count_label['text'] = str(self.step_count)
                 self.world_ui.end_step(self.is_visualisation_on)

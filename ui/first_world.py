@@ -93,6 +93,7 @@ class FirstWorld(WorldUI):
     """
     First World UI class.
     """
+    world: WorldLogic
 
     def __init__(self):
         super().__init__()
@@ -405,93 +406,33 @@ class FirstWorld(WorldUI):
         # fill game background
         self.game_screen.fill(pg.Color(255, 255, 255))
 
-    def generate_random_unit(self, x, y):
-        """
-
-        :param x:
-        :param y:
-        """
-        unit = Unit(self.world, x, y, int(self.initial_unit_energy_var.get()))
-        unit.generate_random_genome()
-        unit.set_body_direction(random.randrange(Unit.DIRECTION_NW))
-        self.world.set_cell(x, y, unit)
-
     def setup_generation(self, generation):
         """
         Initial setup generation.
         """
-        count_of_units_in_game = int(self.units_count_var.get())
-
-        # generate rand units
-        units_xy = [(random.randrange(0, self.world.width - 1), random.randrange(0, self.world.height - 1)) for _ in
-                    range(count_of_units_in_game)]
-        last_generation_units = self.world.get_units()
-        if generation != 0 and len(last_generation_units) == 0:
-            death_units = self.world.death_units[len(self.world.death_units) - int(self.parents_count_entry.get()):]
-            last_generation_units = [(0, 0, unit) for unit in death_units]
-        if generation == 0 or len(last_generation_units) == 0:
-            for (x, y) in units_xy:
-                self.generate_random_unit(x, y)
-        else:
-            for (x, y, unit) in last_generation_units:
-                self.world.set_cell(x, y, None)
-            last_generation_units.sort(key=lambda tmp: tmp[2].get_body_energy(), reverse=True)
-            parents_count = int(self.parents_count_entry.get())
-            parents = last_generation_units[:parents_count]
-            parent: Tuple[int, int, Unit]
-            i = 0
-            generated_parents = int(count_of_units_in_game / parents_count) * parents_count
-            for (_, _, unit) in parents:
-                for _ in range(int(10 / parents_count)):
-                    if i >= count_of_units_in_game:
-                        break
-                    x = units_xy[i][0]
-                    y = units_xy[i][1]
-                    unit_new = Unit(self.world, x, y, int(self.initial_unit_energy_var.get()))
-                    unit_new.set_genome(unit.genome)
-                    unit_new.mutate_genome(int(self.genome_mutate_from_var.get()), int(self.genome_mutate_to_var.get()))
-                    self.world.set_cell(x, y, unit_new)
-                    i += 1
-            i = 0
-            for (x, y) in units_xy:
-                self.generate_random_unit(x, y)
-                i += 1
-                if i >= generated_parents:
-                    break
-
-        # generate food
-        food_xy = [(random.randrange(0, self.world.width), random.randrange(0, self.world.height)) for _ in
-                   range(int(self.food_count_var.get()))]
-        for (x, y, unit) in self.world.get_foods():
-            self.world.set_cell(x, y, None)
-        for (x, y) in food_xy:
-            food = FoodObject(
-                random.randrange(int(self.food_energy_from_var.get()), int(self.food_energy_to_var.get())),
-                x,
-                y
-            )
-            self.world.set_cell(x, y, food)
-
-        # generate poison
-        poison_xy = [(random.randrange(0, self.world.width), random.randrange(0, self.world.height)) for _ in
-                     range(int(self.poison_count_var.get()))]
-        for (x, y, unit) in self.world.get_poisons():
-            self.world.set_cell(x, y, None)
-        for (x, y) in poison_xy:
-            poison = PoisonObject(
-                random.randrange(int(self.poison_energy_from_var.get()), int(self.poison_energy_to_var.get())),
-                x,
-                y
-            )
-            self.world.set_cell(x, y, poison)
+        self.world.set_generation_params(
+            count_of_units_in_game=int(self.units_count_var.get()),
+            parents_count=int(self.parents_count_entry.get()),
+            initial_unit_energy=int(self.initial_unit_energy_var.get()),
+            genome_mutate_from=int(self.genome_mutate_from_var.get()),
+            genome_mutate_to=int(self.genome_mutate_to_var.get()),
+            food_count=int(self.food_count_var.get()),
+            food_energy_from=int(self.food_energy_from_var.get()),
+            food_energy_to=int(self.food_energy_to_var.get()),
+            poison_count=int(self.poison_count_var.get()),
+            poison_energy_from=int(self.poison_energy_from_var.get()),
+            poison_energy_to=int(self.poison_energy_to_var.get())
+        )
+        self.world.start_generation(generation)
 
     def do_step(self):
         """
         Method implement step action.
         """
-        # self.create_game_plot()
-
         self.world.do_step()
+        if len(self.world.get_units()):
+            return False
+        return True
 
     def end_step(self, visualisation):
         """
@@ -519,6 +460,7 @@ class FirstWorld(WorldUI):
         """
         if visualisation:
             pass
+        self.world.end_generation()
 
     def disable_options(self):
         """

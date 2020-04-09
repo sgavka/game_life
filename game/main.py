@@ -64,6 +64,22 @@ class World:
             for _ in range(steps_count):
                 self.do_step()
 
+    def start_step(self):
+        pass
+
+    def end_step(self):
+        pass
+
+    def set_generation_params(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+    def start_generation(self, generation):
+        pass
+
+    def end_generation(self):
+        pass
+
 
 class Unit:
     """

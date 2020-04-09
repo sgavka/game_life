@@ -59,6 +59,7 @@ class World:
         """
         Method implement step action.
         Need implementation.
+        :return bool
         """
         raise Exception()
 
