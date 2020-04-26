@@ -103,9 +103,6 @@ class FirstWorld(WorldUI):
     def __init__(self, root):
         super().__init__(root)
 
-        self.set_cell_size_count_label = None
-        self.cell_size_var = None
-        self.cell_size_entry = None
         self.set_units_count_label = None
         self.units_count_var = None
         self.units_count_entry = None
@@ -142,18 +139,6 @@ class FirstWorld(WorldUI):
 
         :param frame:
         """
-        # cell size
-        self.set_cell_size_count_label = tk.Label(frame, text="Cell size:")
-        self.set_cell_size_count_label.grid(row=0, column=0)
-        ToolTip(self.set_cell_size_count_label, "Set size of cells in pixels.")
-
-        self.cell_size_var = tk.StringVar()
-        self.cell_size_var.set(9)
-        self.cell_size_var.trace('w', self.change_cell_size_entry)
-
-        self.cell_size_entry = tk.Entry(frame, textvariable=self.cell_size_var, width=5)
-        self.cell_size_entry.grid(row=0, column=1)
-
         # units count
         self.set_units_count_label = tk.Label(frame, text="Count of Units:")
         self.set_units_count_label.grid(row=1, column=0)
@@ -371,13 +356,6 @@ class FirstWorld(WorldUI):
         """
         pass
 
-    def change_cell_size_entry(self, *args):
-        """
-
-        :param args:
-        """
-        pass
-
     def setup(self, frame: tk.Widget, wight, height):
         """
 
@@ -389,7 +367,7 @@ class FirstWorld(WorldUI):
         # settings:
         self.count_x = wight
         self.count_y = height
-        self.cell_step = int(self.cell_size_var.get())
+        self.cell_step = 9
         self.cell_width = 1
         self.width = self.count_x * (self.cell_step + self.cell_width)
         self.height = self.count_y * (self.cell_step + self.cell_width)
@@ -482,7 +460,6 @@ class FirstWorld(WorldUI):
         """
         Disable additional options.
         """
-        self.cell_size_entry['state'] = 'disabled'
         self.units_count_entry['state'] = 'disabled'
         self.food_count_entry['state'] = 'disabled'
         self.poison_count_entry['state'] = 'disabled'
@@ -499,7 +476,6 @@ class FirstWorld(WorldUI):
         """
         Enable additional options.
         """
-        self.cell_size_entry['state'] = 'normal'
         self.units_count_entry['state'] = 'normal'
         self.food_count_entry['state'] = 'normal'
         self.poison_count_entry['state'] = 'normal'
