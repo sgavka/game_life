@@ -309,10 +309,10 @@ class Application(tk.Frame):
         Hide visualisation button command.
         """
         if self.is_visualisation_on:
-            self.hide_visualisation_button['text'] = "Hide visualisation"
+            self.hide_visualisation_button['text'] = "Show visualisation"
             self.is_visualisation_on = False
         else:
-            self.hide_visualisation_button['text'] = "Show visualisation"
+            self.hide_visualisation_button['text'] = "Hide visualisation"
             self.is_visualisation_on = True
 
     def start_command(self, unpause=False):
