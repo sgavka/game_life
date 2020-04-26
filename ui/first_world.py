@@ -9,10 +9,15 @@ import tkinter as tk
 import random
 from typing import Tuple
 import pygame as pg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+import matplotlib as mp
+
 from ui.helpers import ToolTip
 from game.first_world import FirstWorld as WorldLogic, Unit, FoodObject, PoisonObject
 from ui.main import World as WorldUI
 
+import numpy as np
 
 class ParameterIncorrectException(Exception):
     """
@@ -95,8 +100,8 @@ class FirstWorld(WorldUI):
     """
     world: WorldLogic
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, root):
+        super().__init__(root)
 
         self.set_cell_size_count_label = None
         self.cell_size_var = None
@@ -276,7 +281,18 @@ class FirstWorld(WorldUI):
         Need implementation.
         :param frame:
         """
-        pass
+        self.statistic_food_button = tk.Button(frame, text="Bitten food", command=self.show_statistic_bitten_food).grid(row=0, column=0)
+
+    def show_statistic_bitten_food(self):
+        self.statistic_bitten_food_windows = tk.Toplevel(self.root)
+        self.statistic_bitten_food_windows.geometry('300x300+200+200')
+
+        fig = Figure(figsize=(5, 4), dpi=100)
+        fig.add_subplot(111).plot(list(range(len(self.world.statistic_bitten_food))), self.world.statistic_bitten_food)
+
+        canvas = FigureCanvasTkAgg(fig, master=self.statistic_bitten_food_windows)
+        canvas.draw()
+        canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
     def change_poison_count_entry(self, *args):
         """

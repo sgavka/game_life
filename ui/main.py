@@ -10,8 +10,9 @@ class World:
     Main class for GUI and flow logic of world.
     """
 
-    def __init__(self):
+    def __init__(self, root):
         self.world = None
+        self.root = root
 
     def setup_cycles(self, frame: tk.Widget):
         """

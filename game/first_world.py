@@ -75,6 +75,7 @@ class FirstWorld(World):
         super().__init__(height, width)
 
         self.death_units = []
+        self.statistic_bitten_food = []
 
     def get_units(self):
         """
@@ -223,6 +224,7 @@ class FirstWorld(World):
         cells_xy = cells_xy[i:]
 
         self.death_units = []
+        self.statistic_bitten_food.append(len(self.get_foods()))
 
     def end_generation(self):
         pass

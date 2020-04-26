@@ -115,7 +115,7 @@ class Application(tk.Frame):
         """
         self.root.title(self.root.title() + ": " + self.world_var.get())
 
-        self.world_ui = self.world_values[self.world_var.get()]()
+        self.world_ui = self.world_values[self.world_var.get()](self.root)
         self.world_ui.setup_cycles(self.additional_cycles_frame)
         self.world_ui.setup_options(self.additional_game_options_frame)
         self.world_ui.setup_statistics(self.statistics_frame)
@@ -124,11 +124,6 @@ class Application(tk.Frame):
         """
         Setup of Options frame.
         """
-        # setup game frame
-        self.setup_game_frame = tk.LabelFrame(self.options_frame, text="Setup game")
-        self.setup_game_frame.grid(row=0, column=0)
-        self.fill_setup_game_frame()
-
         # start button
         self.start_button = tk.Button(self.options_frame, text="Start Game!", command=self.start_command)
         self.start_button.grid(row=1, column=0, sticky=tk.W + tk.E, columnspan=2)
@@ -152,6 +147,11 @@ class Application(tk.Frame):
         self.statistics_frame = tk.LabelFrame(self.options_frame, text="Statistics")
         self.statistics_frame.grid(row=5, column=0, sticky=tk.W + tk.E, columnspan=2)
 
+        # setup game frame
+        self.setup_game_frame = tk.LabelFrame(self.options_frame, text="Setup game")
+        self.setup_game_frame.grid(row=0, column=0)
+        self.fill_setup_game_frame()
+
     def fill_setup_game_frame(self):
         """
         Setup Setup Game frame.
@@ -168,7 +168,7 @@ class Application(tk.Frame):
         ToolTip(self.select_world_label, "Select world")
         self.world_var = tk.StringVar(self.setup_game_frame)
         self.world_var.set(self.world_options[0])
-        self.world_ui = self.world_values[self.world_options[0]]()  # default world
+        self.world_ui = self.world_values[self.world_options[0]](self.root)  # default world
         self.worlds_dropdown = tk.OptionMenu(self.setup_game_frame, self.world_var, *self.world_options)
         self.worlds_dropdown.grid(row=2, column=1)
         self.world_var.trace('w', self.change_world_dropdown)
